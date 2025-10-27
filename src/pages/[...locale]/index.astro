@@ -2,11 +2,9 @@
 import { i18n } from "astro:config/client";
 import { render, getCollection } from "astro:content";
 import { getRelativeLocaleUrl } from "astro:i18n";
-import { Icon } from "astro-icon/components";
 import Time from "$utils/time";
 import Base from "$layouts/Base.astro";
 import Heatmap from "$components/Heatmap.svelte";
-import config from "$config";
 import i18nit from "$i18n";
 
 export async function getStaticPaths() {
@@ -50,20 +48,14 @@ const jottings = await getCollection("jotting", jotting => {
 	return !jotting.data.draft && language == locale;
 });
 
-// Get the most recent note and preface for display
-const newest = notes[0];
+// Get the most recent preface for display
 const preface = prefaces[0];
 // Render preface content if available, otherwise use empty object
 const { Content } = preface ? await render(preface) : ({} as any);
 ---
 
 <Base title={t("navigation.home")} {locale}>
-	<main class="flex flex-col gap-5 sm:gap-20 flex-grow">
-		<header class="flex items-center justify-center flex-wrap-reverse grow-0.6">
-			{config.prologue && <article class="mr-a font-cursive font-thin text-size-xl sm:text-size-2xl line-height-loose whitespace-pre-line">{config.prologue}</article>}
-			<Icon name="site-logo" size={100} is:inline />
-		</header>
-
+	<main class="flex flex-col gap-10 sm:gap-20 flex-grow">
 		{
 			preface && (
 				<section class="flex flex-col">
@@ -78,27 +70,9 @@ const { Content } = preface ? await render(preface) : ({} as any);
 		}
 
 		{
-			newest && (
-				<footer class="flex items-center justify-center flex-wrap-reverse gap-10">
+			(notes.length > 0 || jottings.length > 0) && (
+				<footer class="flex items-center justify-center">
 					<Heatmap {locale} {notes} {jottings} />
-
-					<blockquote class="flex-grow">
-						<h3>{t("home.newest")}</h3>
-						<div class="flex flex-col sm:flex-row justify-between gap-1 mt-2">
-							<a href={getRelativeLocaleUrl(locale, `/note/${newest.id.split("/").slice(1).join("/")}`)} class="link">
-								{newest.data.series ? `${newest.data.series} | ` : ""}
-								{newest.data.title}
-							</a>
-							<div class="flex gap-1">
-								{newest.data.tags?.map(tag => (
-									<span class="c-remark text-size-sm">#{tag}</span>
-								))}
-							</div>
-						</div>
-						<time title={Time.full(newest.data.timestamp)} class="c-remark font-mono text-xs">
-							{Time(newest.data.timestamp)}
-						</time>
-					</blockquote>
 				</footer>
 			)
 		}

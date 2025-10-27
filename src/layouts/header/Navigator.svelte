@@ -142,15 +142,6 @@
 		<ThemeSwitcher {sun} {moon} />
 
 		<a href={getRelativeLocaleUrl(locale, "/feed.xml")} target="_blank" aria-label="Subscription" class="inline-flex">{@render rss()}</a>
-
-		<Menu label="Language switcher">
-			{#snippet trigger()}{@render globe()}{/snippet}
-			<div data-no-swup class="contents">
-				<a href={getRelativeLocaleUrl("en", path)} aria-label="English">English</a>
-				<a href={getRelativeLocaleUrl("zh-cn", path)} aria-label="简体中文">简体中文</a>
-				<a href={getRelativeLocaleUrl("ja", path)} aria-label="日本語">日本語</a>
-			</div>
-		</Menu>
 	</footer>
 </nav>
 
@@ -162,7 +153,6 @@
 	import { onMount, type Snippet } from "svelte";
 	import i18nit from "$i18n";
 	import ThemeSwitcher from "./ThemeSwitcher.svelte";
-	import Menu from "./Menu.svelte";
 
 	let { locale, route, home, note, jotting, about, globe, rss, sun, moon, bars, close }: { locale: string; route: string } & { [key: string]: Snippet } = $props();
 

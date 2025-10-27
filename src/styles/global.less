@@ -1,23 +1,25 @@
 .light-theme() {
-	--primary-color: #2a2a28;
-	--secondary-color: #50504d;
-	--remark-color: #757575;
-	--weak-color: #9f9f9c;
-	--background-color: #fffffd;
-	--block-color: #eeeeee;
-	--shadow-color: #cdcdcc;
-	--selection-color: #adadacc3;
+	--primary-color: #2b2b2b;
+	--secondary-color: #25375c;
+	--remark-color: #787878;
+	--weak-color: #9b9b9b;
+	--background-color: #fefdfb;
+	--block-color: #f4f1ee;
+	--shadow-color: #d4d1ce;
+	--selection-color: #b4a5a588;
+	--accent-color: #425675;
 }
 
 .dark-theme() {
-	--primary-color: #dddddb;
-	--secondary-color: #aaaaa8;
-	--remark-color: #a5a5a5;
-	--weak-color: #5d5d5a;
-	--background-color: #0e0e0c;
-	--block-color: #1e1e1e;
-	--shadow-color: #323231;
-	--selection-color: #adadacc3;
+	--primary-color: #e4e2dd;
+	--secondary-color: #455d85;
+	--remark-color: #9b9892;
+	--weak-color: #6b6862;
+	--background-color: #232222;
+	--block-color: #2d2c2b;
+	--shadow-color: #3a3938;
+	--selection-color: #7d7a7588;
+	--accent-color: #617899;
 }
 
 .code-dark() {
@@ -31,26 +33,9 @@
 
 :root {
 	.light-theme();
-	--serif: "Noto Serif SC", serif;
+	--serif: "Neuton", serif;
 	--monospace: "Maple Mono NF CN", monospace;
 	--swup-fade-theme-duration: .15s;
-}
-
-:lang(zh-hk),
-:lang(zh-mo) {
-	--serif: "Noto Serif HK", "Noto Serif SC", serif;
-}
-
-:lang(zh-tw) {
-	--serif: "Noto Serif TC", "Noto Serif SC", serif;
-}
-
-:lang(ja) {
-	--serif: "Noto Serif JP", "Noto Serif SC", serif;
-}
-
-:lang(ko) {
-	--serif: "Noto Serif KR", "Noto Serif SC", serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -111,6 +96,7 @@ html {
 
 body {
 	font-family: var(--serif), var(--monospace);
+	font-size: 20px;
 	color: var(--primary-color);
 	background-color: var(--background-color);
 

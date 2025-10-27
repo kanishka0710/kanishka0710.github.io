@@ -1,14 +1,13 @@
 {
-	"title": "ThoughtLite",
-	"prologue": "If you need a website\nthat loads fast and has great SEO, then Astro is for you.",
+	"title": "KR",
 	"author": {
-		"name": "Your Name",
-		"email": "hi@your.mail",
-		"link": "https://your.website"
+		"name": "Kanishka Roy",
+		"email": "kanishkaroy@gmail.com",
+		"link": "https://kanishkaroy.me"
 	},
-	"description": "A modern Astro theme focused on content creation.",
+	"description": "Kanishka Roy's personal website.",
 	"copyright": {
-		"type": "CC BY-NC-ND 4.0",
+		"type": "CC BY-SA 4.0",
 		"year": "2025"
 	},
 	"feed": {
