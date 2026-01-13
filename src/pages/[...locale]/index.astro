@@ -5,6 +5,7 @@ import { getRelativeLocaleUrl } from "astro:i18n";
 import Time from "$utils/time";
 import Base from "$layouts/Base.astro";
 import Heatmap from "$components/Heatmap.svelte";
+import Typewriter from "$components/Typewriter.svelte";
 import i18nit from "$i18n";
 
 export async function getStaticPaths() {
@@ -51,16 +52,91 @@ const jottings = await getCollection("jotting", jotting => {
 // Get the most recent preface for display
 const preface = prefaces[0];
 // Render preface content if available, otherwise use empty object
-const { Content } = preface ? await render(preface) : ({} as any);
+let prefaceHtml = "";
+if (preface?.rendered?.html) {
+	prefaceHtml = preface.rendered.html;
+	// Remove the "Hi, I'm Kanishka." heading from the markdown content
+	prefaceHtml = prefaceHtml.replace(/<h3>Hi, I'm Kanishka\.?<\/h3>/i, "");
+}
+
 ---
 
-<Base title={t("navigation.home")} {locale}>
-	<main class="flex flex-col gap-10 sm:gap-20 flex-grow">
+<script is:inline>
+	// Add typewriter effect to the hardcoded heading
+	function initTypewriter() {
+		const h3 = document.getElementById('typewriter-heading');
+		if (!h3) {
+			return;
+		}
+		
+		// Only run once
+		if (h3.dataset.typewriter) {
+			return;
+		}
+		h3.dataset.typewriter = "true";
+		
+		const text = "Hi, I'm Kanishka.";
+		h3.textContent = "";
+		
+		let index = 0;
+		const cursor = document.createElement('span');
+		cursor.className = 'typewriter-cursor';
+		cursor.textContent = '|';
+		cursor.style.display = 'inline-block';
+		cursor.style.marginLeft = '2px';
+		cursor.style.color = '#425675';
+		h3.appendChild(cursor);
+		
+		setTimeout(() => {
+			const interval = setInterval(() => {
+				if (index < text.length) {
+					h3.insertBefore(document.createTextNode(text[index]), cursor);
+					index++;
+				} else {
+					clearInterval(interval);
+					setTimeout(() => {
+						cursor.style.opacity = '0';
+					}, 1000);
+				}
+			}, 80);
+		}, 300);
+	}
+	
+	// Run on initial load
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', initTypewriter);
+	} else {
+		initTypewriter();
+	}
+	
+	// Run on page navigation (for Astro view transitions)
+	document.addEventListener("astro:page-load", initTypewriter);
+</script>
+
+<style is:global>
+	#typewriter-heading {
+		color: #425675;
+		font-size: 2rem;
+		margin-bottom: 1rem;
+	}
+	
+	.typewriter-cursor {
+		animation: blink 1s step-end infinite;
+	}
+	
+	@keyframes blink {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0; }
+	}
+</style>
+
+<Base title={t("navigation.about")} {locale}>
+	<main class="flex flex-col gap-6 sm:gap-10 flex-grow">
 		{
 			preface && (
 				<section class="flex flex-col">
-					<article class="markdown">
-						<Content />
+					<h3 id="typewriter-heading"></h3>
+					<article class="markdown" set:html={prefaceHtml}>
 					</article>
 					<a href={getRelativeLocaleUrl(locale, "/preface")} class="self-end my-2 text-size-sm c-secondary">
 						—— {Time.date.locale(preface.data.timestamp, locale)}
@@ -71,7 +147,7 @@ const { Content } = preface ? await render(preface) : ({} as any);
 
 		{
 			(notes.length > 0 || jottings.length > 0) && (
-				<footer class="flex items-center justify-center">
+				<footer class="flex items-center justify-center -mb-4 sm:-mb-6">
 					<Heatmap {locale} {notes} {jottings} />
 				</footer>
 			)

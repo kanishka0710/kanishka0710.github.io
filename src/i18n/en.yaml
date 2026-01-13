@@ -23,10 +23,10 @@ home:
 jotting:
   tag: Tag
 navigation:
-  about: About
+  about: About me
   home: Home
-  jotting: Jotting
-  note: Note
+  jotting: Writing
+  note: Technical Notes
   policy: Policy
   preface: Preface
   subscription: Subscription

@@ -3,41 +3,18 @@
 		a {
 			position: relative;
 			display: inline-block;
-
-			p,
-			span {
-				padding: 5px 10px;
-				text-align: center;
-			}
-
-			span {
-				position: absolute;
-				top: 0px;
-				width: 100%;
-				height: 100%;
-				border-bottom: 2px solid transparent;
-
-				transition: border-color 0.15s ease;
-			}
-
-			p {
-				color: var(--background-color);
-				background-color: var(--primary-color);
-
-				clip-path: inset(0 100% 0 0);
-				transition: clip-path 0.15s ease;
-			}
+			padding: 5px 10px;
+			text-align: center;
+			color: var(--primary-color);
+			border-bottom: 2px solid transparent;
+			transition: border-color 0.15s ease;
 
 			&.location {
-				span {
-					border-color: var(--secondary-color);
-				}
+				border-color: var(--secondary-color);
 			}
 
 			&:hover {
-				p {
-					clip-path: inset(0 0 0 0);
-				}
+				border-color: var(--primary-color);
 			}
 		}
 	}
@@ -69,32 +46,8 @@
 		nav {
 			header {
 				a {
-					display: flex;
-					gap: 0.5rem;
-
-					span,
-					p {
-						padding: 0px;
-					}
-
-					span {
-						position: static;
-						width: auto;
-
-						display: inline-flex;
-						align-items: center;
-
-						border-bottom: none;
-						color: var(--primary-color);
-					}
-
-					p {
-						white-space: nowrap;
-
-						clip-path: none;
-						color: var(--primary-color);
-						background-color: var(--background-color);
-					}
+					display: block;
+					white-space: nowrap;
 
 					&.location {
 						font-weight: bold;
@@ -117,24 +70,17 @@
 <div role="button" onclick={() => (menu = false)} class:pointer-events-none={!menu} class:bg-transparent={!menu} class="fixed top-0 left-0 w-screen h-screen pointer-events-auto bg-#aaaaaa88 transition-background-color sm:hidden"></div>
 
 <nav bind:this={navigator} class:transform-translate-x-full={!menu} class="fixed top-0 right-0 flex flex-col justify-between items-start gap-5 p-5 bg-background h-full sm:contents overflow-hidden transition-transform">
-	<header class="grid gap-5 c-secondary grid-rows-[repeat(5,1fr)] sm:(grid-rows-none grid-cols-[repeat(4,1fr)])">
+	<header class="grid gap-5 c-secondary grid-rows-[repeat(4,1fr)] sm:(grid-rows-none grid-cols-[repeat(3,1fr)])">
 		<button onclick={() => (menu = false)} class="sm:hidden">{@render close()}</button>
 
-		<a href={getRelativeLocaleUrl(locale)} class:location={route == getRelativeLocaleUrl(locale) || route.startsWith(getRelativeLocaleUrl(locale, "/preface"))}>
-			<span>{@render home()}</span>
-			<p>{t("navigation.home")}</p>
-		</a>
-		<a href={getRelativeLocaleUrl(locale, "/note")} class:location={route.startsWith(getRelativeLocaleUrl(locale, "/note"))}>
-			<span>{@render note()}</span>
-			<p>{t("navigation.note")}</p>
+		<a href={getRelativeLocaleUrl(locale)} class:location={route == getRelativeLocaleUrl(locale)}>
+			{t("navigation.about")}
 		</a>
 		<a href={getRelativeLocaleUrl(locale, "/jotting")} class:location={route.startsWith(getRelativeLocaleUrl(locale, "/jotting"))}>
-			<span>{@render jotting()}</span>
-			<p>{t("navigation.jotting")}</p>
+			{t("navigation.jotting")}
 		</a>
-		<a href={getRelativeLocaleUrl(locale, "/about")} class:location={route.startsWith(getRelativeLocaleUrl(locale, "/about"))}>
-			<span>{@render about()}</span>
-			<p>{t("navigation.about")}</p>
+		<a href={getRelativeLocaleUrl(locale, "/note")} class:location={route.startsWith(getRelativeLocaleUrl(locale, "/note"))}>
+			{t("navigation.note")}
 		</a>
 	</header>
 

@@ -24,6 +24,7 @@ wrangler.toml
 
 # macOS-specific files
 .DS_Store
+.vscode/
 
 # jetbrains setting folder
 .idea/

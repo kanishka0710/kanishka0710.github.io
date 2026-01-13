@@ -28,6 +28,7 @@ export default defineConfig({
 			"selection": "var(--selection-color)",
 		},
 		fontFamily: {
+			sans: ["Satoshi", "sans-serif"],
 			mono: ["Maple Mono NF CN", "monospace"],
 			cursive: ["Playwrite MX", "The Peak Font Plus", "serif"],
 		},
