@@ -31,20 +31,16 @@ let list = jottings.map(jotting => ({
 	id: jotting.id,
 	data: {
 		title: jotting.data.title,
-		timestamp: jotting.data.timestamp,
-		tags: jotting.data.tags,
+		timestamp: jotting.data.timestamp.getTime(),
 		sensitive: jotting.data.sensitive,
 		top: jotting.data.top
 	}
 }));
-
-// Extract all unique tags from the filtered notes
-const tags = Array.from(new Set(jottings.flatMap(jotting => jotting.data.tags).filter(Boolean))).sort();
 ---
 
 <Base title={t("navigation.jotting")} {locale}>
 	<main class="flex flex-col grow">
-		<Jotting client:load {locale} jottings={list} {tags}>
+		<Jotting client:load {locale} jottings={list}>
 			<Icon name="lucide:flag-triangle-right" slot="top" />
 			<Icon name="lucide:siren" title={t("sensitive.icon")} slot="sensitive" />
 			<Icon name="lucide:arrow-left" slot="left" />

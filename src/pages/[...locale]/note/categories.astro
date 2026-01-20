@@ -1,0 +1,67 @@
+---
+import { getCollection } from "astro:content";
+import { i18n } from "astro:config/client";
+import Base from "$layouts/Base.astro";
+import Icon from "$components/Icon.astro";
+import i18nit from "$i18n";
+
+export async function getStaticPaths() {
+	return i18n!.locales.map(locale => ({ 
+		params: { locale: locale == i18n?.defaultLocale ? undefined : (locale as string) } 
+	}));
+}
+
+const { locale = i18n!.defaultLocale } = Astro.params;
+const t = i18nit(locale);
+
+// Get all category index pages
+const categoryPages = await getCollection("note", note => {
+	const [language] = note.id.split("/");
+	return language == locale && note.data.is_category_index && !note.data.draft;
+});
+
+// Sort categories alphabetically
+categoryPages.sort((a, b) => a.data.title.localeCompare(b.data.title));
+---
+
+<Base title="Technical Note Categories" {locale}>
+	<main class="flex flex-col grow">
+		<h1 class="text-8 font-bold mb-8">Technical Note Categories</h1>
+		<p class="mb-8 text-secondary">Browse technical notes organized by subject area.</p>
+		
+		<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+			{categoryPages.map(category => {
+				// Extract category slug from id (handles both "en/wireless/index" and "en/wireless")
+				const parts = category.id.split('/');
+				const categorySlug = parts[parts.length - 1] === "index" ? parts[parts.length - 2] : parts[parts.length - 1];
+				return (
+					<a 
+						href={`/${locale}/note/category/${categorySlug}`}
+						class="block p-6 border-2 border-primary rounded-lg hover:bg-primary hover:text-background transition-all"
+					>
+						<h2 class="text-6 font-bold mb-3 flex items-center gap-2">
+							<Icon name="lucide:layers" />
+							{category.data.title}
+						</h2>
+						{category.data.description && (
+							<p class="text-secondary">{category.data.description}</p>
+						)}
+						{category.data.subcategories && category.data.subcategories.length > 0 && (
+							<div class="mt-4 text-sm">
+								<p class="font-semibold mb-2">Topics:</p>
+								<ul class="list-disc list-inside text-secondary">
+									{category.data.subcategories.slice(0, 3).map(sub => (
+										<li>{sub.name}</li>
+									))}
+									{category.data.subcategories.length > 3 && (
+										<li>...and {category.data.subcategories.length - 3} more</li>
+									)}
+								</ul>
+							</div>
+						)}
+					</a>
+				);
+			})}
+		</div>
+	</main>
+</Base>

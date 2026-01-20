@@ -6,12 +6,20 @@ import { defineCollection, z } from "astro:content";
  * Represents main blog articles with comprehensive metadata
  */
 const note = defineCollection({
-	// Load all markdown files except those starting with underscore (private/draft files)
-	loader: glob({ pattern: ["**/*.md", "!**/_*.md", "!**/_*/*.md"], base: "./src/content/note" }),
+	// Load all markdown files except those starting with underscore (but allow _index.md)
+	loader: glob({ pattern: "**/*.md", base: "./src/content/note" }),
 	schema: z.object({
 		title: z.string(),								// Post title (required)
 		timestamp: z.date(),							// Publication date (required)
 		series: z.string().optional(),					// Series name for grouped posts
+		category: z.string().optional(),				// Category (e.g., dsp, wireless, software)
+		subcategory: z.string().optional(),				// Subcategory for organizing within category
+		is_category_index: z.boolean().default(false),	// Marks this as a category index page
+		subcategories: z.array(z.object({				// Subcategories list for category index pages
+			name: z.string(),
+			slug: z.string(),
+			description: z.string().optional()
+		})).optional(),
 		tags: z.array(z.string()).optional(),			// Array of topic tags
 		description: z.string().optional(),				// Post description/excerpt
 		sensitive: z.boolean().default(false),			// Marks content as sensitive
@@ -51,13 +59,4 @@ const preface = defineCollection({
 	})
 });
 
-/**
- * Information collection configuration
- * Represents static content like about pages, policies, or site information
- */
-const information = defineCollection({
-	// Load both markdown and YAML files for mixed content types
-	loader: glob({ pattern: "**/*.(md|yaml)", base: "./src/content/information" })
-});
-
-export const collections = { note, jotting, preface, information };
+export const collections = { note, jotting, preface };

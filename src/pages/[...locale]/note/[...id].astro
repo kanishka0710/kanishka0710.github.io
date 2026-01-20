@@ -18,7 +18,7 @@ export async function getStaticPaths() {
 		// Extract language and note ID from file path structure
 		const [language, ...id] = note.id.split("/");
 
-		// Generate path params with optional locale (omit for default locale)
+		// Generate path params, omitting locale for default locale
 		return { params: { locale: language == i18n?.defaultLocale ? undefined : language, id: id.join("/") }, props: { note } };
 	});
 }

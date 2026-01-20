@@ -1,0 +1,239 @@
+---
+import { getCollection } from "astro:content";
+import { i18n } from "astro:config/client";
+import { getRelativeLocaleUrl } from "astro:i18n";
+import Base from "$layouts/Base.astro";
+import Icon from "$components/Icon.astro";
+import i18nit from "$i18n";
+import Time from "$utils/time";
+
+export async function getStaticPaths() {
+	const paths = [];
+	
+	// Debug: Get ALL notes first to see what we have
+	const allNotes = await getCollection("note");
+	console.log("=== DEBUG: All notes ===");
+	console.log("Total notes:", allNotes.length);
+	allNotes.forEach(n => {
+		console.log(`  ID: ${n.id}, is_category_index: ${n.data.is_category_index}, draft: ${n.data.draft}`);
+	});
+	
+	for (const locale of i18n!.locales) {
+		// Get all category index pages (files with is_category_index: true)
+		const categoryPages = await getCollection("note", note => {
+			const [language] = note.id.split("/");
+			return language == locale && note.data.is_category_index && !note.data.draft;
+		});
+		
+		console.log(`=== DEBUG: Category pages for locale ${locale} ===`);
+		console.log("Found:", categoryPages.length);
+		categoryPages.forEach(p => console.log(`  - ${p.id}`));
+		
+		for (const categoryPage of categoryPages) {
+			// Extract category slug from id
+			// ID could be "en/wireless/index" or "en/wireless" depending on Astro version
+			const parts = categoryPage.id.split('/');
+			let categorySlug: string;
+			if (parts[parts.length - 1] === "index") {
+				categorySlug = parts[parts.length - 2]; // "en/wireless/index" -> "wireless"
+			} else {
+				categorySlug = parts[parts.length - 1]; // "en/wireless" -> "wireless"
+			}
+			
+		console.log(`  Creating path: locale=${locale}, category=${categorySlug}`);
+		
+		paths.push({
+			params: { 
+				locale: locale == i18n!.defaultLocale ? undefined : locale,
+				category: categorySlug
+			},
+			props: { categoryPage }
+		});
+		}
+	}
+	
+	console.log("=== DEBUG: Final paths ===", paths.length);
+	return paths;
+}
+
+const { categoryPage } = Astro.props;
+const { category, locale = i18n!.defaultLocale } = Astro.params;
+const t = i18nit(locale as string);
+
+// Get all notes in this category
+const notesInCategory = await getCollection("note", note => {
+	const [language] = note.id.split("/");
+	return (
+		language == (locale as string) &&
+		note.data.category === category &&
+		!note.data.is_category_index &&
+		!note.data.draft
+	);
+});
+
+// Sort by top priority, then by timestamp
+notesInCategory.sort((a, b) => {
+	if (a.data.top !== b.data.top) {
+		return b.data.top - a.data.top;
+	}
+	return b.data.timestamp.getTime() - a.data.timestamp.getTime();
+});
+
+// Group notes by subcategory
+const notesBySubcategory: Record<string, typeof notesInCategory> = {};
+const notesWithoutSubcategory: typeof notesInCategory = [];
+
+for (const note of notesInCategory) {
+	if (note.data.subcategory) {
+		if (!notesBySubcategory[note.data.subcategory]) {
+			notesBySubcategory[note.data.subcategory] = [];
+		}
+		notesBySubcategory[note.data.subcategory].push(note);
+	} else {
+		notesWithoutSubcategory.push(note);
+	}
+}
+
+---
+
+<Base title={categoryPage.data.title} locale={locale as string}>
+	<main class="flex flex-col grow">
+		<!-- Category Header -->
+		<div class="mb-8">
+			<a href="/note?page=1" class="inline-flex items-center gap-2 text-secondary hover:text-primary mb-4">
+				<Icon name="lucide:arrow-left" />
+				Back to Technical Notes
+			</a>
+			<h1 class="text-8 font-bold mb-4">{categoryPage.data.title}</h1>
+			{categoryPage.data.description && (
+				<p class="text-secondary text-5">{categoryPage.data.description}</p>
+			)}
+		</div>
+
+		<!-- Category Content -->
+		{categoryPage.rendered && (
+			<div class="markdown mb-8" set:html={categoryPage.rendered.html} />
+		)}
+
+		<!-- Table of Contents -->
+		<div class="mb-8">
+			<h2 class="text-7 font-bold mb-6 flex items-center gap-2">
+				<Icon name="lucide:list" />
+				Notes in this Category
+			</h2>
+
+			<!-- Notes grouped by subcategory -->
+			{categoryPage.data.subcategories && categoryPage.data.subcategories.length > 0 ? (
+				<div class="space-y-8">
+					{categoryPage.data.subcategories.map(subcategory => {
+						const notes = notesBySubcategory[subcategory.slug] || [];
+						
+						if (notes.length === 0) return null;
+						
+						return (
+							<details class="border border-primary rounded-lg p-4" open>
+								<summary class="cursor-pointer font-bold text-6 mb-4 flex items-center gap-2 hover:text-secondary">
+									<Icon name="lucide:layers" />
+									{subcategory.name}
+									<span class="text-sm font-normal text-secondary">({notes.length} notes)</span>
+								</summary>
+								{subcategory.description && (
+									<p class="text-secondary text-sm mb-4">{subcategory.description}</p>
+								)}
+								<ul class="list-none space-y-2 ml-6">
+									{notes.map(note => {
+										const noteSlug = note.id.split('/').slice(1).join('/');
+										return (
+										<li>
+											<a 
+												href={getRelativeLocaleUrl(locale as string, `/note/${noteSlug}`)}
+												class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 p-2 rounded hover:shadow-lg transition-all text-sm"
+												style="border: 2px solid #666; background-color: rgba(249, 250, 251, 0.5);"
+											>
+												<div class="flex-1">
+													<span class="font-medium">{note.data.title}</span>
+													{note.data.description && (
+														<p class="text-xs text-secondary mt-0.5">{note.data.description}</p>
+													)}
+												</div>
+												<span class="text-xs text-secondary whitespace-nowrap">
+													{Time.locale(note.data.timestamp, locale as string)}
+												</span>
+											</a>
+										</li>
+									);
+									})}
+								</ul>
+							</details>
+						);
+					})}
+				</div>
+			) : (
+			<!-- If no subcategories, show flat list -->
+			<ul class="list-none space-y-2">
+				{notesInCategory.map(note => {
+					const noteSlug = note.id.split('/').slice(1).join('/');
+					return (
+					<li>
+						<a 
+							href={getRelativeLocaleUrl(locale as string, `/note/${noteSlug}`)}
+							class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 p-2 rounded-lg hover:shadow-lg transition-all text-sm"
+							style="border: 2px solid #666; background-color: rgba(249, 250, 251, 0.5);"
+						>
+								<div class="flex-1">
+									<span class="font-medium">{note.data.title}</span>
+									{note.data.description && (
+										<p class="text-xs text-secondary mt-0.5">{note.data.description}</p>
+									)}
+								</div>
+					<span class="text-xs text-secondary whitespace-nowrap">
+						{Time.locale(note.data.timestamp, locale as string)}
+					</span>
+				</a>
+			</li>
+			);
+			})}
+		</ul>
+	)}
+
+	<!-- Notes without subcategory (if any) -->
+			{notesWithoutSubcategory.length > 0 && (
+				<details class="border border-primary rounded-lg p-4 mt-8" open>
+					<summary class="cursor-pointer font-bold text-6 mb-4">
+						Other Notes ({notesWithoutSubcategory.length})
+					</summary>
+				<ul class="list-none space-y-2 ml-6">
+					{notesWithoutSubcategory.map(note => {
+						const noteSlug = note.id.split('/').slice(1).join('/');
+						return (
+						<li>
+							<a 
+								href={getRelativeLocaleUrl(locale as string, `/note/${noteSlug}`)}
+								class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 p-2 rounded hover:shadow-lg transition-all text-sm"
+								style="border: 2px solid #666; background-color: rgba(249, 250, 251, 0.5);"
+							>
+									<div class="flex-1">
+										<span class="font-medium">{note.data.title}</span>
+										{note.data.description && (
+											<p class="text-xs text-secondary mt-0.5">{note.data.description}</p>
+										)}
+									</div>
+							<span class="text-xs text-secondary whitespace-nowrap">
+								{Time.locale(note.data.timestamp, locale as string)}
+							</span>
+						</a>
+					</li>
+					);
+					})}
+				</ul>
+			</details>
+		)}
+
+		{notesInCategory.length === 0 && (
+				<p class="text-secondary text-center py-8">
+					Notes will be added soon.
+				</p>
+			)}
+		</div>
+	</main>
+</Base>

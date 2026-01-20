@@ -64,24 +64,34 @@
 </style>
 
 <main class="flex flex-col-reverse sm:flex-row gap-10 grow">
-	<article class="flex flex-col gap-4 grow">
+	<article class="flex flex-col gap-2 grow">
 		{#each list as note (note.id)}
-			<section animate:flip={{ duration: 150 }} class="flex flex-col sm:flex-row">
-				<div class="flex flex-col gap-1">
-					<div class="flex gap-1 items-center">
+			<a 
+				href={getRelativeLocaleUrl(locale, `/note/${note.id.split("/").slice(1).join("/")}`)}
+				animate:flip={{ duration: 150 }}
+				class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 p-3 rounded hover:shadow-lg transition-all text-sm"
+				style="border: 2px solid #666; background-color: rgba(249, 250, 251, 0.5);"
+			>
+				<div class="flex-1 flex flex-col gap-1">
+					<div class="flex items-center gap-1.5 flex-wrap">
 						{#if note.data.top > 0}<span>{@render top()}</span>{/if}
 						{#if note.data.sensitive}<span>{@render sensitive()}</span>{/if}
-						{#if note.data.series}<button onclick={() => choose_series(note.data.series, true)}>{note.data.series}</button><b>|</b>{/if}
-						<a href={getRelativeLocaleUrl(locale, `/note/${note.id.split("/").slice(1).join("/")}`)} class="link">{note.data.title}</a>
+						{#if note.data.category}<button onclick={(e) => { e.preventDefault(); choose_category(note.data.category, true); }} class="text-xs text-secondary hover:text-primary">[{note.data.category}]</button>{/if}
+						{#if note.data.series}<button onclick={(e) => { e.preventDefault(); choose_series(note.data.series, true); }} class="text-xs text-secondary hover:text-primary">{note.data.series}</button>{/if}
+						<span class="font-medium text-primary">{note.data.title}</span>
 					</div>
-					<time title={Time.full(note.data.timestamp)} class="font-mono text-2.6 c-remark">{Time(note.data.timestamp)}</time>
+					{#if note.data.tags && note.data.tags.length > 0}
+						<div class="flex items-center gap-1 flex-wrap">
+							{#each note.data.tags as tag}
+								<button onclick={(e) => { e.preventDefault(); switch_tag(tag, true); }} class="text-xs text-secondary hover:text-primary">#{tag}</button>
+							{/each}
+						</div>
+					{/if}
 				</div>
-				<span class="flex items-center gap-1 sm:ml-a c-remark">
-					{#each note.data.tags as tag}
-						<button onclick={() => switch_tag(tag, true)} class="text-3.5 sm:text-sm">#{tag}</button>
-					{/each}
+				<span class="text-xs text-secondary whitespace-nowrap">
+					{new Date(note.data.timestamp).toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' })}
 				</span>
-			</section>
+			</a>
 		{/each}
 
 		{#if pages > 1}
@@ -104,14 +114,27 @@
 	</article>
 
 	<aside class="sm:flex-basis-200px flex flex-col gap-5">
-		<section>
-			<h3>{t("note.series")}</h3>
-			<p>
-				{#each series_list as series_item (series_item)}
-					<button class:selected={series_item == series} onclick={() => choose_series(series_item)}>{series_item}</button>
-				{/each}
-			</p>
-		</section>
+		{#if series_list && series_list.length > 0}
+			<section>
+				<h3>{t("note.series")}</h3>
+				<p>
+					{#each series_list as series_item (series_item)}
+						<button class:selected={series_item == series} onclick={() => choose_series(series_item)}>{series_item}</button>
+					{/each}
+				</p>
+			</section>
+		{/if}
+
+		{#if category_list && category_list.length > 0}
+			<section>
+				<h3>Category</h3>
+				<p>
+					{#each category_list as category_item (category_item)}
+						<button class:selected={category_item == category} onclick={() => choose_category(category_item)}>{category_item}</button>
+					{/each}
+				</p>
+			</section>
+		{/if}
 
 		<section>
 			<h3>{t("note.tag")}</h3>
@@ -132,32 +155,36 @@
 	import Time from "$utils/time";
 	import i18nit from "$i18n";
 
-	let { locale, notes, series: series_list, tags: tag_list, top, sensitive, left, right, dots }: { locale: string; notes: any[]; series: string[]; tags: string[]; top: Snippet; sensitive: Snippet; left: Snippet; right: Snippet; dots: Snippet } = $props();
+	let { locale, notes, series: series_list, categories: category_list, tags: tag_list, top, sensitive, left, right, dots }: { locale: string; notes: any[]; series?: string[]; categories?: string[]; tags: string[]; top: Snippet; sensitive: Snippet; left: Snippet; right: Snippet; dots: Snippet } = $props();
 
 	const t = i18nit(locale);
 
 	let initial = $state(false); // Track initial load to prevent unexpected effects
 	let series: string | null = $state(null);
+	let category: string | null = $state(null);
 	let tags: string[] = $state([]);
 	let filtered: any[] = $derived.by(() => {
 		let list: any[] = notes
-			// Apply series and tag filtering
+			// Apply series, category, and tag filtering
 			.filter(note => {
 				// Check if note matches the specified series
 				let match_series = !series || note.data.series == series;
 
+				// Check if note matches the specified category
+				let match_category = !category || note.data.category == category;
+
 				// Check if note contains all specified tags
 				let match_tags = tags.every(tag => note.data.tags?.includes(tag));
 
-				return match_series && match_tags;
+				return match_series && match_category && match_tags;
 			})
 			// Sort by timestamp (newest first)
-			.sort((a, b) => b.data.top - a.data.top || b.data.timestamp.getTime() - a.data.timestamp.getTime());
+			.sort((a, b) => b.data.top - a.data.top || b.data.timestamp - a.data.timestamp);
 
 		if (!initial) return list;
 
-		// Build URL with current page, series, and tag filters
-		let url = getRelativeLocaleUrl(locale, `/note?page=${page}${series ? `&series=${series}` : ""}${tags.map(tag => `&tag=${tag}`).join("")}`);
+		// Build URL with current page, series, category, and tag filters
+		let url = getRelativeLocaleUrl(locale, `/note?page=${page}${series ? `&series=${series}` : ""}${category ? `&category=${category}` : ""}${tags.map(tag => `&tag=${tag}`).join("")}`);
 
 		// Match https://github.com/swup/swup/blob/main/src/helpers/history.ts#L22
 		window.history.replaceState({ url, random: Math.random(), source: "swup" }, "", url);
@@ -202,11 +229,23 @@
 		series = turn ? series_choice : null;
 	}
 
+	/**
+	 * Select or deselect a category filter (only one category can be active at a time)
+	 * @param category_choice the category to select or deselect
+	 * @param turn whether to include or exclude the category
+	 */
+	function choose_category(category_choice: string, turn?: boolean) {
+		if (turn === undefined) turn = category !== category_choice;
+		// Set category if turning on, or clear if turning off
+		category = turn ? category_choice : null;
+	}
+
 	onMount(() => {
 		const params = new URLSearchParams(window.location.search);
 
 		page = Number(params.get("page")) || 1;
 		series = params.get("series");
+		category = params.get("category");
 		tags = params.getAll("tag");
 
 		initial = true;

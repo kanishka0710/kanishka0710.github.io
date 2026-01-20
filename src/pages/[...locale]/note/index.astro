@@ -1,6 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 import { i18n } from "astro:config/client";
+import { getRelativeLocaleUrl } from "astro:i18n";
 import Base from "$layouts/Base.astro";
 import Note from "$components/note/Note.svelte";
 import Icon from "$components/Icon.astro";
@@ -19,11 +20,18 @@ const notes = await getCollection("note", note => {
 	// Extract language from the file path structure
 	const [language] = note.id.split("/");
 
-	// Filter criteria: must be published and match locale
+	// Filter criteria: must be published, match locale, and not be a category index
 	let published = !note.data.draft;
 	let localed = language == locale;
+	let notCategoryIndex = !note.data.is_category_index;
 
-	return published && localed;
+	return published && localed && notCategoryIndex;
+});
+
+// Get category index pages
+const categoryPages = await getCollection("note", note => {
+	const [language] = note.id.split("/");
+	return language == locale && note.data.is_category_index && !note.data.draft;
 });
 
 // Standardize note structure
@@ -31,22 +39,59 @@ let list = notes.map(note => ({
 	id: note.id,
 	data: {
 		title: note.data.title,
-		timestamp: note.data.timestamp,
+		timestamp: note.data.timestamp.getTime(),
 		series: note.data.series,
+		category: note.data.category,
+		subcategory: note.data.subcategory,
 		tags: note.data.tags,
 		sensitive: note.data.sensitive,
 		top: note.data.top
 	}
 }));
 
-// Extract all unique series and tags from the filtered notes
+// Extract all unique series, categories, and tags from the filtered notes
 const series = Array.from(new Set(notes.map(note => note.data.series).filter(Boolean))).sort();
+const categories = Array.from(new Set(notes.map(note => note.data.category).filter(Boolean))).sort();
 const tags = Array.from(new Set(notes.flatMap(note => note.data.tags).filter(Boolean))).sort();
 ---
 
 <Base title={t("navigation.note")} {locale}>
 	<main class="flex flex-col grow">
-		<Note client:load {locale} notes={list} {series} {tags}>
+		<!-- Categories Section -->
+		{categoryPages.length > 0 && (
+			<section class="mb-8 pb-8 border-b-2 border-primary">
+				<h2 class="text-7 font-bold mb-6 flex items-center gap-2">
+					<Icon name="lucide:layers" />
+					Browse by Category
+				</h2>
+				<div class="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+					{categoryPages
+						.sort((a, b) => a.data.title.localeCompare(b.data.title))
+						.map(category => {
+							// Extract category slug from id (handles both "en/wireless/index" and "en/wireless")
+							const parts = category.id.split('/');
+							const categorySlug = parts[parts.length - 1] === "index" ? parts[parts.length - 2] : parts[parts.length - 1];
+							const categoryNotes = notes.filter(note => note.data.category === categorySlug);
+							return (
+								<a 
+									href={getRelativeLocaleUrl(locale as string, `/note/category/${categorySlug}`)}
+									class="block p-4 border-2 border-primary rounded-lg hover:bg-primary hover:text-background transition-all"
+								>
+									<h3 class="text-5 font-bold mb-2">{category.data.title}</h3>
+									{category.data.description && (
+										<p class="text-sm text-secondary mb-2">{category.data.description}</p>
+									)}
+									<span class="text-xs text-secondary">{categoryNotes.length} notes</span>
+								</a>
+							);
+						})
+					}
+				</div>
+			</section>
+		)}
+
+		<!-- All Notes Section -->
+		<Note client:load {locale} notes={list} {series} {categories} {tags}>
 			<Icon name="lucide:flag-triangle-right" slot="top" />
 			<Icon name="lucide:siren" title={t("sensitive.icon")} slot="sensitive" />
 			<Icon name="lucide:arrow-left" slot="left" />

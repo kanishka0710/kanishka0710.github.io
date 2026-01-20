@@ -28,3 +28,6 @@ wrangler.toml
 
 # jetbrains setting folder
 .idea/
+
+# obsidian metadata
+.obsidian/

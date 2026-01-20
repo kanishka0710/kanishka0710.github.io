@@ -25,58 +25,20 @@
 		}
 	}
 
-	aside {
-		section {
-			display: flex;
-			flex-direction: column;
-			gap: 5px;
-
-			p {
-				display: flex;
-				flex-direction: row;
-				flex-wrap: wrap;
-				gap: 5px;
-
-				button {
-					border-bottom: 1px solid var(--primary-color);
-					padding: 0rem 0.2rem;
-
-					font-size: 0.9rem;
-					transition:
-						color 0.1s ease-in-out,
-						background-color 0.1s ease-in-out;
-
-					&.selected {
-						color: var(--background-color);
-						background-color: var(--primary-color);
-					}
-
-					@media (min-width: 640px) {
-						&:hover {
-							color: var(--background-color);
-							background-color: var(--primary-color);
-						}
-					}
-				}
-			}
-		}
-	}
 </style>
 
-<main class="flex flex-col-reverse sm:flex-row gap-10 grow">
+<main class="flex flex-col grow">
 	<article class="flex flex-col grow">
 		<header class="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-5">
 			{#each list as jotting (jotting.id)}
-				<section animate:flip={{ duration: 150 }} class="flex flex-col justify-center gap-0.5 b-1 b-solid b-secondary rd-2 py-2 px-3">
+				<section animate:flip={{ duration: 150 }} class="flex flex-col justify-between gap-1 b-1 b-solid b-secondary rd-2 py-2 px-3">
 					<span class="flex items-center gap-1">
 						{#if jotting.data.top > 0}<span>{@render top()}</span>{/if}
 						{#if jotting.data.sensitive}<span>{@render sensitive()}</span>{/if}
 						<a href={getRelativeLocaleUrl(locale, `/jotting/${jotting.id.split("/").slice(1).join("/")}`)} class="c-primary font-600 link">{jotting.data.title}</a>
 					</span>
-					<span class="flex gap-1">
-						{#each jotting.data.tags as tag}
-							<button onclick={() => switch_tag(tag, true)} class="text-3.3 c-remark">#{tag}</button>
-						{/each}
+					<span class="text-xs c-secondary">
+						{new Date(jotting.data.timestamp).toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' })}
 					</span>
 				</section>
 			{/each}
@@ -100,16 +62,6 @@
 			</footer>
 		{/if}
 	</article>
-	<aside class="sm:flex-basis-200px flex flex-col gap-5">
-		<section>
-			<h3>{t("jotting.tag")}</h3>
-			<p>
-				{#each tag_list as tag (tag)}
-					<button class:selected={tags.includes(tag)} onclick={() => switch_tag(tag)}>{tag}</button>
-				{/each}
-			</p>
-		</section>
-	</aside>
 </main>
 
 <script lang="ts">
@@ -119,23 +71,18 @@
 	import { fade } from "svelte/transition";
 	import i18nit from "$i18n";
 
-	let { locale, jottings, tags: tag_list, top, sensitive, left, right, dots }: { locale: string; jottings: any[]; tags: string[]; top: Snippet; sensitive: Snippet; left: Snippet; right: Snippet; dots: Snippet } = $props();
-
-	const t = i18nit(locale);
+	let { locale, jottings, top, sensitive, left, right, dots }: { locale: string; jottings: any[]; top: Snippet; sensitive: Snippet; left: Snippet; right: Snippet; dots: Snippet } = $props();
 
 	let initial = $state(false); // Track initial load to prevent unexpected effects
-	let tags: string[] = $state([]);
 	let filtered: any[] = $derived.by(() => {
 		let list: any[] = jottings
-			// Apply tag filtering
-			.filter(jotting => tags.every(tag => jotting.data.tags?.includes(tag)))
 			// Sort by timestamp (newest first)
-			.sort((a, b) => b.data.top - a.data.top || b.data.timestamp.getTime() - a.data.timestamp.getTime());
+			.sort((a, b) => b.data.top - a.data.top || b.data.timestamp - a.data.timestamp);
 
 		if (!initial) return list;
 
-		// Build URL with current page and tag filters
-		let url = getRelativeLocaleUrl(locale, `/jotting?page=${page}${tags.map(tag => `&tag=${tag}`).join("")}`);
+		// Build URL with current page
+		let url = getRelativeLocaleUrl(locale, `/jotting?page=${page}`);
 
 		// Match https://github.com/swup/swup/blob/main/src/helpers/history.ts#L22
 		window.history.replaceState({ url, random: Math.random(), source: "swup" }, "", url);
@@ -156,24 +103,10 @@
 	// Apply pagination by slicing the array
 	let list: any[] = $derived(filtered.slice((page - 1) * size, page * size));
 
-	/**
-	 * Toggle tag inclusion/exclusion in the filter list
-	 * @param tag Tag to toggle
-	 * @param turn whether to include or exclude the tag
-	 */
-	function switch_tag(tag: string, turn?: boolean) {
-		let included = tags.includes(tag);
-		if (turn === undefined) turn = !included;
-
-		// Add tag if turning on and not included, or remove if turning off
-		tags = turn ? (included ? tags : [...tags, tag]) : tags.filter(item => item !== tag);
-	}
-
 	onMount(() => {
 		const params = new URLSearchParams(window.location.search);
 
 		page = Number(params.get("page")) || 1;
-		tags = params.getAll("tag");
 
 		initial = true;
 	});

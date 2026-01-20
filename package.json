@@ -31,7 +31,9 @@
 		"build": "astro build",
 		"preview": "astro preview",
 		"update": "npx npm-check-updates --interactive",
-		"count": "git log --pretty=tformat: --numstat | grep -v package | awk '{ A += $1; S += $2; T += $1 - $2 } END { printf \"+ %s\tLines\\n- %s\tLines\\n= %s\tLines\\n\", A, S, T }'"
+		"count": "git log --pretty=tformat: --numstat | grep -v package | awk '{ A += $1; S += $2; T += $1 - $2 } END { printf \"+ %s\tLines\\n- %s\tLines\\n= %s\tLines\\n\", A, S, T }'",
+		"timestamp": "tsx scripts/update-timestamp.ts",
+		"watch:timestamps": "tsx scripts/watch-timestamps.ts"
 	},
 	"dependencies": {
 		"@astrojs/markdown-remark": "^6.3.8",
