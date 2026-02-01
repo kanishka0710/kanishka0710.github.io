@@ -40,15 +40,6 @@ const notes = (
 	})
 ).sort((a, b) => b.data.timestamp.getTime() - a.data.timestamp.getTime());
 
-// Get published jottings for current locale
-const jottings = await getCollection("jotting", jotting => {
-	// Extract language and jotting ID from file path structure
-	const [language] = jotting.id.split("/");
-
-	// Filter published jottings by current locale
-	return !jotting.data.draft && language == locale;
-});
-
 // Get the most recent preface for display
 const preface = prefaces[0];
 // Render preface content if available, otherwise use empty object
@@ -146,9 +137,9 @@ if (preface?.rendered?.html) {
 		}
 
 		{
-			(notes.length > 0 || jottings.length > 0) && (
+			notes.length > 0 && (
 				<footer class="flex items-center justify-center -mb-16 sm:-mb-20">
-					<Heatmap {locale} {notes} {jottings} />
+					<Heatmap {locale} {notes} jottings={[]} />
 				</footer>
 			)
 		}

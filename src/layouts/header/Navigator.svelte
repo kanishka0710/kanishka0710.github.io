@@ -70,14 +70,11 @@
 <div role="button" onclick={() => (menu = false)} class:pointer-events-none={!menu} class:bg-transparent={!menu} class="fixed top-0 left-0 w-screen h-screen pointer-events-auto bg-#aaaaaa88 transition-background-color sm:hidden"></div>
 
 <nav bind:this={navigator} class:transform-translate-x-full={!menu} class="fixed top-0 right-0 flex flex-col justify-between items-start gap-5 p-5 bg-background h-full sm:contents overflow-hidden transition-transform">
-	<header class="grid gap-5 c-secondary grid-rows-[repeat(4,1fr)] sm:(grid-rows-none grid-cols-[repeat(3,1fr)])">
+	<header class="grid gap-5 c-secondary grid-rows-[repeat(3,1fr)] sm:(grid-rows-none grid-cols-[repeat(2,1fr)])">
 		<button onclick={() => (menu = false)} class="sm:hidden">{@render close()}</button>
 
 		<a href={getRelativeLocaleUrl(locale)} class:location={route == getRelativeLocaleUrl(locale)}>
 			{t("navigation.about")}
-		</a>
-		<a href={getRelativeLocaleUrl(locale, "/jotting")} class:location={route.startsWith(getRelativeLocaleUrl(locale, "/jotting"))}>
-			{t("navigation.jotting")}
 		</a>
 		<a href={getRelativeLocaleUrl(locale, "/note")} class:location={route.startsWith(getRelativeLocaleUrl(locale, "/note"))}>
 			{t("navigation.note")}
@@ -98,7 +95,7 @@
 	import i18nit from "$i18n";
 	import ThemeSwitcher from "./ThemeSwitcher.svelte";
 
-	let { locale, route, home, note, jotting, about, globe, sun, moon, bars, close }: { locale: string; route: string } & { [key: string]: Snippet } = $props();
+	let { locale, route, home, note, about, globe, sun, moon, bars, close }: { locale: string; route: string } & { [key: string]: Snippet } = $props();
 
 	const t = i18nit(locale);
 

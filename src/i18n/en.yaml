@@ -16,16 +16,12 @@ feed:
 home:
   heatmap:
     empty: No words
-    jotting: '{count} jottings'
     note: '{count} notes'
   newest: Newest Note
   prefaces: Prefaces
-jotting:
-  tag: Tag
 navigation:
   about: About me
   home: Home
-  jotting: Writing
   note: Technical Notes
   policy: Policy
   preface: Preface

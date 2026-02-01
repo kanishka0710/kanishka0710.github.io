@@ -16,12 +16,11 @@ const CANCEL_MESSAGE = "Operation cancelled";
 	// Determine the base content directory path
 	let path = join(dirname(fileURLToPath(import.meta.url)), "..", "src", "content");
 
-	// Select content type: Note, Jotting, or Preface
+	// Select content type: Note or Preface
 	const content_type = await select({
 		message: "Select content type",
 		options: [
 			{ label: "Note", value: "note", hint: "In-depth, carefully conceived long-form works" },
-			{ label: "Jotting", value: "jotting", hint: "Brief insights, scattered thoughts or daily observations" },
 			{ label: "Preface", value: "preface", hint: "Life updates, site announcements or creative philosophy" }
 		]
 	});
@@ -63,7 +62,7 @@ const CANCEL_MESSAGE = "Operation cancelled";
 		// Generate filename from timestamp (e.g., 2025-10-18-14-30-00.md)
 		path = join(path, `${timestamp.substring(0, 19).replace(/[\s:]/g, "-")}.md`);
 	} else {
-		// Note and Jotting require additional metadata
+		// Note requires additional metadata
 		content += "## Start Writing\n\nStart your content here..."
 
 		// Prompt user to input article title
