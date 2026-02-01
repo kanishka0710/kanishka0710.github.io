@@ -1,7 +1,6 @@
 ---
 title: Looking towards 2026
-timestamp:
-  "{ date:YYYY-MM-DDTHH:mm:ss.000Z }":
+timestamp: 2026-01-31T00:00:00.000Z
 description:
 draft: false
 top: 0
