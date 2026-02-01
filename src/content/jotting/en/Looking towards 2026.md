@@ -1,7 +1,7 @@
 ---
 title: Looking towards 2026
 timestamp: 2026-01-31T00:00:00.000Z
-description:
+description: 2026 Goals
 draft: false
 top: 0
 ---
