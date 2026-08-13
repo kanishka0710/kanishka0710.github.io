@@ -29,5 +29,5 @@ wrangler.toml
 # jetbrains setting folder
 .idea/
 
-# obsidian metadata
+# local editor metadata
 .obsidian/
