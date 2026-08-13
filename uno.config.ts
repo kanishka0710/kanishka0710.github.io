@@ -26,6 +26,7 @@ export default defineConfig({
 			"block": "var(--block-color)",
 			"shadow": "var(--shadow-color)",
 			"selection": "var(--selection-color)",
+			"accent": "var(--accent-color)",
 		},
 		fontFamily: {
 			sans: ["Satoshi", "sans-serif"],

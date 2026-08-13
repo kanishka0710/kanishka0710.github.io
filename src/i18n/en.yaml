@@ -14,18 +14,20 @@ feed:
     content and get the latest content updates in time.
   visit: This is the feed page. Visit {title} for the full website experience.
 home:
-  heatmap:
-    empty: No words
-    note: '{count} notes'
+  experience: Experience
   newest: Newest Note
   prefaces: Prefaces
 navigation:
   about: About me
   home: Home
   note: Technical Notes
+  work: Work
+  project: Projects
   policy: Policy
   preface: Preface
   subscription: Subscription
+project:
+  subtitle: Selected work — click a project for details, media, and technical notes.
 note:
   contents: Contents
   series: Series

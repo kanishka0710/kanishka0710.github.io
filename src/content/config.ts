@@ -41,4 +41,23 @@ const preface = defineCollection({
 	})
 });
 
-export const collections = { note, preface };
+/**
+ * Project collection configuration
+ * Portfolio projects shown as cards with markdown detail modals
+ */
+const project = defineCollection({
+	loader: glob({ pattern: "**/*.md", base: "./src/content/project" }),
+	schema: z.object({
+		title: z.string(),
+		tools: z.array(z.string()),
+		blurb: z.string(),
+		github: z.string().url().optional(),
+		video: z.string().optional(),
+		images: z.array(z.string()).optional(),
+		timestamp: z.date(),
+		order: z.number().int().nonnegative().default(0),
+		draft: z.boolean().default(false)
+	})
+});
+
+export const collections = { note, preface, project };

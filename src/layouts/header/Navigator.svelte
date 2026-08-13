@@ -1,125 +1,143 @@
+<nav class="float-nav" aria-label="Page sections">
+	{#each items as item}
+		<a
+			href={`${homeUrl}#${item.id}`}
+			class:active={section === item.id}
+			aria-current={section === item.id ? "location" : undefined}
+			onclick={() => activate(item.id)}
+		>
+			<span class="bar"></span>
+			<span class="label">{item.label}</span>
+		</a>
+	{/each}
+</nav>
+
+<script lang="ts">
+	import { getRelativeLocaleUrl } from "astro:i18n";
+	import { onMount } from "svelte";
+	import i18nit from "$i18n";
+
+	let { locale }: { locale: string } = $props();
+
+	const t = i18nit(locale);
+	const homeUrl = getRelativeLocaleUrl(locale);
+	const items = [
+		{ id: "about", label: t("navigation.about") },
+		{ id: "work", label: t("navigation.work") },
+		{ id: "projects", label: t("navigation.project") }
+	] as const;
+
+	let section = $state("about");
+	let pinnedUntil = 0;
+
+	function activate(id: string) {
+		section = id;
+		pinnedUntil = Date.now() + 1000;
+	}
+
+	function spy() {
+		if (Date.now() < pinnedUntil) return;
+
+		const hash = window.location.hash.replace(/^#/, "");
+		const anchor = window.innerHeight * 0.28;
+		let current = "";
+
+		for (const item of items) {
+			const el = document.getElementById(item.id);
+			if (el && el.getBoundingClientRect().top <= anchor) current = item.id;
+		}
+
+		if (!current) {
+			if (hash && items.some(item => item.id === hash)) current = hash;
+			else if (document.getElementById("about")) current = "about";
+		}
+
+		if (current) section = current;
+	}
+
+	onMount(() => {
+		const hash = window.location.hash.replace(/^#/, "");
+		if (items.some(item => item.id === hash)) section = hash;
+
+		spy();
+		window.addEventListener("scroll", spy, { passive: true });
+		window.addEventListener("resize", spy);
+		window.addEventListener("hashchange", spy);
+
+		const update = () => requestAnimationFrame(spy);
+		document.addEventListener("astro:page-load", update);
+		if (window.swup) window.swup.hooks.on("page:load", update);
+		else document.addEventListener("swup:enable", () => window.swup?.hooks.on("page:load", update));
+
+		return () => {
+			window.removeEventListener("scroll", spy);
+			window.removeEventListener("resize", spy);
+			window.removeEventListener("hashchange", spy);
+			document.removeEventListener("astro:page-load", update);
+		};
+	});
+</script>
+
 <style lang="less">
-	header {
-		a {
-			position: relative;
-			display: inline-block;
-			padding: 5px 10px;
-			text-align: center;
+	.float-nav {
+		position: sticky;
+		top: 1.35rem;
+		align-self: flex-start;
+		flex-shrink: 0;
+		z-index: 20;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1.6rem;
+		margin-top: 1.15rem;
+	}
+
+	a {
+		display: flex;
+		flex-direction: row;
+		align-items: stretch;
+		gap: 0.4rem;
+		color: var(--secondary-color);
+		transition: color 0.15s ease;
+
+		&:hover {
 			color: var(--primary-color);
-			border-bottom: 2px solid transparent;
-			transition: border-color 0.15s ease;
+		}
 
-			&.location {
-				border-color: var(--secondary-color);
-			}
+		&.active {
+			color: var(--accent-color);
 
-			&:hover {
-				border-color: var(--primary-color);
+			.bar {
+				background: var(--accent-color);
 			}
 		}
 	}
 
-	footer {
-		a:not(footer > a) {
-			display: flex;
-			align-items: center;
-			gap: 0.25rem;
+	.bar {
+		width: 2px;
+		background: transparent;
+		transition: background-color 0.15s ease;
+	}
 
-			padding: 0.5rem 0.75rem;
-
-			font-size: 0.875rem;
-			font-weight: bold;
-			white-space: nowrap;
-
-			transition:
-				color 0.15s ease-in-out,
-				background-color 0.15s ease-in-out;
-
-			&:hover {
-				color: var(--background-color);
-				background-color: var(--primary-color);
-			}
-		}
+	.label {
+		writing-mode: vertical-rl;
+		text-orientation: mixed;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		font-size: 0.78rem;
+		font-weight: 600;
 	}
 
 	@media screen and (max-width: 640px) {
-		nav {
-			header {
-				a {
-					display: block;
-					white-space: nowrap;
+		.float-nav {
+			top: 1rem;
+			gap: 1.15rem;
+			margin-top: 0.85rem;
+		}
 
-					&.location {
-						font-weight: bold;
-					}
-				}
-			}
-
-			footer {
-				a:not(footer > a) {
-					padding: 0.25rem 0rem;
-					font-weight: normal;
-				}
-			}
+		.label {
+			font-size: 0.7rem;
+			letter-spacing: 0.14em;
 		}
 	}
 </style>
-
-<!-- svelte-ignore a11y_interactive_supports_focus -->
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<div role="button" onclick={() => (menu = false)} class:pointer-events-none={!menu} class:bg-transparent={!menu} class="fixed top-0 left-0 w-screen h-screen pointer-events-auto bg-#aaaaaa88 transition-background-color sm:hidden"></div>
-
-<nav bind:this={navigator} class:transform-translate-x-full={!menu} class="fixed top-0 right-0 flex flex-col justify-between items-start gap-5 p-5 bg-background h-full sm:contents overflow-hidden transition-transform">
-	<header class="grid gap-5 c-secondary grid-rows-[repeat(3,1fr)] sm:(grid-rows-none grid-cols-[repeat(2,1fr)])">
-		<button onclick={() => (menu = false)} class="sm:hidden">{@render close()}</button>
-
-		<a href={getRelativeLocaleUrl(locale)} class:location={route == getRelativeLocaleUrl(locale)}>
-			{t("navigation.about")}
-		</a>
-		<a href={getRelativeLocaleUrl(locale, "/note")} class:location={route.startsWith(getRelativeLocaleUrl(locale, "/note"))}>
-			{t("navigation.note")}
-		</a>
-	</header>
-
-	<footer class="flex flex-col gap-2 sm:gap-5 sm:(flex-row gap-7)">
-		<ThemeSwitcher {sun} {moon} />
-	</footer>
-</nav>
-
-<button onclick={() => (menu = true)} class="sm:hidden">{@render bars()}</button>
-
-<script lang="ts">
-	import { i18n } from "astro:config/client";
-	import { getRelativeLocaleUrl } from "astro:i18n";
-	import { onMount, type Snippet } from "svelte";
-	import i18nit from "$i18n";
-	import ThemeSwitcher from "./ThemeSwitcher.svelte";
-
-	let { locale, route, home, note, about, globe, sun, moon, bars, close }: { locale: string; route: string } & { [key: string]: Snippet } = $props();
-
-	const t = i18nit(locale);
-
-	// Control mobile menu visibility state
-	let menu: boolean = $state(false);
-	let navigator: HTMLElement | undefined = $state();
-
-	// Extract path without locale prefix for language switching
-	let path: string | undefined = $derived(route.slice(`/${locale == i18n?.defaultLocale ? "" : locale}`.length) || undefined);
-
-	onMount(() => {
-		// Close mobile menu when any navigation link is clicked
-		for (const link of navigator!.getElementsByTagName("a")) {
-			link.addEventListener("click", () => (menu = false));
-		}
-
-		// Set up route tracking for page navigation with Swup integration
-		const update_route = () => (route = window.location.pathname);
-		if (window.swup) {
-			// Register route update hook if Swup is already available
-			window.swup.hooks.on("page:load", update_route);
-		} else {
-			// Wait for Swup to be enabled and then register the hook
-			document.addEventListener("swup:enable", () => window.swup?.hooks.on("page:load", update_route));
-		}
-	});
-</script>

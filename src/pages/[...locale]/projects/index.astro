@@ -1,0 +1,26 @@
+---
+import { i18n } from "astro:config/client";
+import { getRelativeLocaleUrl } from "astro:i18n";
+
+export async function getStaticPaths() {
+	return i18n!.locales.map(locale => ({
+		params: { locale: locale == i18n?.defaultLocale ? undefined : (locale as string) }
+	}));
+}
+
+const { locale = i18n!.defaultLocale } = Astro.params;
+const home = getRelativeLocaleUrl(locale);
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="refresh" content={`0;url=${home}#projects`} />
+		<link rel="canonical" href={`${home}#projects`} />
+		<script is:inline define:vars={{ home }}>
+			location.replace(home + "#projects");
+		</script>
+	</head>
+	<body></body>
+</html>

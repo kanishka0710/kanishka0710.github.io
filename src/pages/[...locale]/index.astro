@@ -1,11 +1,12 @@
 ---
 import { i18n } from "astro:config/client";
-import { render, getCollection } from "astro:content";
+import { getCollection } from "astro:content";
 import { getRelativeLocaleUrl } from "astro:i18n";
 import Time from "$utils/time";
 import Base from "$layouts/Base.astro";
-import Heatmap from "$components/Heatmap.svelte";
-import Typewriter from "$components/Typewriter.svelte";
+import Experience from "$components/Experience.svelte";
+import Projects from "$components/project/Projects.svelte";
+import Icon from "$components/Icon.astro";
 import i18nit from "$i18n";
 
 export async function getStaticPaths() {
@@ -29,17 +30,6 @@ const prefaces = (
 	})
 ).sort((a, b) => b.data.timestamp.getTime() - a.data.timestamp.getTime());
 
-// Get published notes for current locale, sorted by timestamp (newest first)
-const notes = (
-	await getCollection("note", note => {
-		// Extract language and note ID from file path structure
-		const [language] = note.id.split("/");
-
-		// Filter published notes by current locale
-		return !note.data.draft && language == locale;
-	})
-).sort((a, b) => b.data.timestamp.getTime() - a.data.timestamp.getTime());
-
 // Get the most recent preface for display
 const preface = prefaces[0];
 // Render preface content if available, otherwise use empty object
@@ -49,6 +39,33 @@ if (preface?.rendered?.html) {
 	// Remove the "Hi, I'm Kanishka." heading from the markdown content
 	prefaceHtml = prefaceHtml.replace(/<h3>Hi, I'm Kanishka\.?<\/h3>/i, "");
 }
+
+const projectEntries = (
+	await getCollection("project", project => {
+		const [language] = project.id.split("/");
+		return !project.data.draft && language == locale;
+	})
+).sort((a, b) => {
+	if (b.data.order !== a.data.order) return b.data.order - a.data.order;
+	return b.data.timestamp.getTime() - a.data.timestamp.getTime();
+});
+
+const projects = projectEntries.map(project => {
+	const [, ...rest] = project.id.split("/");
+	const slug = rest.join("/");
+
+	return {
+		id: project.id,
+		slug,
+		title: project.data.title,
+		tools: project.data.tools,
+		blurb: project.data.blurb,
+		github: project.data.github,
+		video: project.data.video,
+		images: project.data.images,
+		html: project.rendered?.html ?? ""
+	};
+});
 
 ---
 
@@ -75,7 +92,7 @@ if (preface?.rendered?.html) {
 		cursor.textContent = '|';
 		cursor.style.display = 'inline-block';
 		cursor.style.marginLeft = '2px';
-		cursor.style.color = '#425675';
+		cursor.style.color = 'var(--accent-color)';
 		h3.appendChild(cursor);
 		
 		setTimeout(() => {
@@ -106,7 +123,7 @@ if (preface?.rendered?.html) {
 
 <style is:global>
 	#typewriter-heading {
-		color: #425675;
+		color: var(--accent-color);
 		font-size: 2rem;
 		margin-bottom: 1rem;
 	}
@@ -125,7 +142,7 @@ if (preface?.rendered?.html) {
 	<main class="flex flex-col gap-6 sm:gap-10 flex-grow">
 		{
 			preface && (
-				<section class="flex flex-col">
+				<section id="about" class="flex flex-col" style="scroll-margin-top: 4.5rem;">
 					<h3 id="typewriter-heading"></h3>
 					<article class="markdown" set:html={prefaceHtml}>
 					</article>
@@ -136,12 +153,16 @@ if (preface?.rendered?.html) {
 			)
 		}
 
-		{
-			notes.length > 0 && (
-				<footer class="flex items-center justify-center -mb-16 sm:-mb-20">
-					<Heatmap {locale} {notes} jottings={[]} />
-				</footer>
-			)
-		}
+		<Experience {locale} />
+
+		<Projects
+			client:load
+			heading={t("navigation.project")}
+			subtitle={t("project.subtitle")}
+			{projects}
+		>
+			<Icon name="lucide:x" slot="closeIcon" />
+			<Icon name="simple-icons:github" slot="githubIcon" />
+		</Projects>
 	</main>
 </Base>

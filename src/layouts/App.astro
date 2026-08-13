@@ -10,6 +10,7 @@ const { title, subtitle, description, author, article } = Astro.props;
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
+		<meta name="theme-color" content="#0b141c" />
 
 		<meta property="og:title" content={`${subtitle && `${subtitle} | `}${title}`} />
 		<meta property="og:type" content={(article && "article") || "website"} />
@@ -34,10 +35,6 @@ const { title, subtitle, description, author, article } = Astro.props;
 		<link rel="preload" as="style" href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400,300&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
 
 
-		<script is:inline>
-			var theme = localStorage.getItem("theme");
-			if (theme) document.documentElement.dataset.theme = theme;
-		</script>
 	</head>
 	<body>
 		<slot />
